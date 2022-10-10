@@ -72,6 +72,11 @@ class Tela():
 
         self.lbl_prod = tk.Label(self.frm_esq, text="Produtos de Estoque", font="Broadway", bg="#7FFFD4", height=6, width=54)
         self.lbl_prod.grid(column=0, row=0)
+        
+        self.img = tk.PhotoImage(file='Storage20place.png')
+
+        self.lbl_img = tk.Label(self.frm_esq, image=self.img,bg='#7FFFD4')
+        self.lbl_img.grid(column=0,row=0,sticky=tk.E,padx=40)
 
         self.lblcima = tk.Label(self.frm_esq, bg="#FFD700", width=85, height=2)
         self.lblcima.grid(column=0, row=1)
