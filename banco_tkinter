@@ -1,0 +1,232 @@
+import tkinter as tk
+from tkinter import DISABLED, ttk
+from tkinter import messagebox
+
+class Tela():
+    def __init__(self, master):
+        self.janela = master
+        self.janela.title("Cadastrar Cliente")
+        self.janela.geometry("400x400")
+
+        self.frm = tk.Frame(self.janela)
+        self.frm.pack()
+
+        self.lbl_nome = tk.Label(self.frm, text="Nome:")
+        self.lbl_nome.grid(column=0, row=0)
+
+        self.entry_nome = tk.Entry(self.frm)
+        self.entry_nome.grid(column=1, row=0)
+
+        self.lbl_cpf = tk.Label(self.frm, text="CPF:")
+        self.lbl_cpf.grid(column=0, row=2)
+        self.entry_cpf = tk.Entry(self.frm)
+        self.entry_cpf.grid(column=1, row=2)
+
+        self.btn_inse = tk.Button(self.frm, text="Inserir", command=self.inserir)
+        self.btn_inse.grid(column=1, row=3, sticky=tk.E)
+
+        self.frmb = tk.Frame(self.janela)
+        self.frmb.pack()
+
+        colunas = ('id', 'Nome', 'CPF')
+        self.tvw = ttk.Treeview(self.frmb, columns=colunas, show="headings", height=9)
+        self.tvw.grid(column=0, row=2)
+
+        self.tvw.heading(colunas[0], text='id')
+        self.tvw.heading(colunas[1], text='Nome')
+        self.tvw.heading(colunas[2], text='CPF')
+        self.tvw.column('id', minwidth=1, width=100)
+        self.tvw.column('Nome', minwidth=1, width=150)
+        self.tvw.column('CPF', minwidth=1, width=140)
+
+        self.consutar()
+
+        self.frbt = tk.Frame(self.janela)
+        self.frbt.pack()
+
+        self.frbt1 = tk.Frame(self.janela)
+        self.frbt1.pack()
+        self.frbt1.pack_forget()
+
+        self.btn_atualizar = tk.Button(self.frbt, text="Atualizar", command=self.atualizar)
+        self.btn_atualizar.grid(column=0, row=3)
+
+        self.btn_remover = tk.Button(self.frbt, text="Remover", command=self.remover)
+        self.btn_remover.grid(column=1, row=3)
+
+        self.btn_confirmar = tk.Button(self.frbt1, text="Confirmar", command=self.confirmar)
+        self.btn_confirmar["state"] = tk.DISABLED
+        self.btn_confirmar.grid(column=2, row=3)
+
+        self.btn_cancelar = tk.Button(self.frbt1, text="Cancelar", command=self.cancelar, state=DISABLED)
+        self.btn_cancelar.grid(column=3, row=3)
+
+    def cancelar(self):
+        self.entry_nome.delete(0, "end")
+        self.entry_cpf.delete(0, "end")
+        self.btn_inse["state"] = tk.NORMAL
+        self.btn_atualizar["state"] = tk.NORMAL
+        self.btn_remover["state"] = tk.NORMAL
+        self.frbt1.pack_forget()
+
+
+    def remover(self):
+        selecionado = self.tvw.selection()
+        if len(selecionado) > 1:
+            messagebox.showerror("aviso", "Selecione apenas 1")
+        else:
+            id = self.tvw.item(selecionado, "values")[0]
+            print(id)
+            query = f"DELETE FROM cliente WHERE id = {id};"
+            db_deletar(query)
+            self.consutar()
+
+    def confirmar(self):
+        nome = self.entry_nome.get()
+        cpf = self.entry_cpf.get()
+        # selecionado = self.tvw.selection()
+        id = self.tvw.item(self.selecionado_at, "values")[0]
+        query = f'UPDATE cliente SET nome="{nome}", cpf={cpf} WHERE id = {id}'
+        db_atualizar(query)
+        self.btn_confirmar["state"] = tk.DISABLED
+        self.btn_atualizar["state"] = tk.NORMAL
+        self.btn_inse["state"] = tk.NORMAL
+        self.entry_nome.delete(0, "end")
+        self.entry_cpf.delete(0, "end")
+        self.consutar()
+        self.frbt1.pack_forget()
+
+
+    def atualizar(self):
+        self.selecionado_at = self.tvw.selection()
+        if len(self.selecionado_at) == 0:
+            print(len(self.selecionado_at))
+            self.consutar()
+        elif len(self.selecionado_at) > 1:
+            print(len(self.selecionado_at))
+            messagebox.showerror("aviso", "Selecione apenas 1")
+        else:
+            nome = self.tvw.item(self.selecionado_at, "values")[1]
+            cpf = self.tvw.item(self.selecionado_at, "values")[2]
+            self.entry_nome.insert(0, nome)
+            self.entry_cpf.insert(0, cpf)
+            self.btn_confirmar["state"] = tk.NORMAL
+            self.btn_atualizar["state"] = tk.DISABLED
+            self.btn_inse["state"] = tk.DISABLED
+            self.btn_cancelar["state"] = tk.NORMAL
+            self.btn_remover["state"] = tk.DISABLED
+            self.frbt1.pack()
+
+
+    def consutar(self):
+        sql_consutar = "SELECT * FROM cliente;"
+        for i in self.tvw.get_children():
+            self.tvw.delete(i)
+        for i in db_consultar(sql_consutar):
+            self.tvw.insert("", tk.END, values=(i[0], i[1], i[2]))
+
+
+    def inserir(self):
+        nome = self.entry_nome.get()
+        cpf = self.entry_cpf.get()
+        sql_inserir = f"INSERT INTO cliente VALUES(NULL, '{nome}', '{cpf}')"
+        db_inserir(sql_inserir)
+        messagebox.showinfo("Aviso", "Cliente inserido com sucesso")
+        self.entry_nome.delete(0, "end")
+        self.entry_cpf.delete(0, "end")
+        self.consutar()
+
+
+
+
+import sqlite3
+from sqlite3 import Error
+
+
+def conexao():
+    caminho = r"C:\Users\carlos.ceac\Desktop\Python\banco.db"
+    try:
+        con = None
+        con = sqlite3.connect(caminho)
+        return con
+    except Error as error:
+        print(error)
+
+sql_insert = 'INSERT INTO cliente VALUES(4,"Teste", "0000000");'
+
+sql_tabela = """
+             CREATE TABLE cliente(
+             id INTEGER PRIMARY KEY,
+             nome VARCHAR(100) NOT NULL,
+             cpf VARCHAR(11) NOT NULL)
+             """
+
+sql_update = 'UPDATE cliente SET nome = "Elias Charizard" WHERE id = 8'
+sql_delete = 'DELETE FROM cliente WHERE id > 10;'
+sql_consutar = "SELECT * FROM cliente;"
+# print(conexao())
+
+def db_consultar(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        resultado = cursor.fetchall()
+        con.close()
+        return resultado
+    except Error as er:
+        print(er)
+
+def db_inserir(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        print("Registros inseridos")
+    except Error as er:
+        print(er)
+
+def db_tabela(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        print("Tabela inserida")
+    except Error as er:
+        print(er)
+
+def db_atualizar(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+        print("Atualiza funcionando")
+    except Error as er:
+        print(er)
+
+def db_deletar(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+        print("Deletado com Sucesso!")
+    except Error as er:
+        print(er)
+
+# tabela(sql_tabela)
+# deletar(sql_delete)
+# atualizar(sql_update)
+# inserir(sql_insert)
+# for i in consultar(sql_consutar):
+#     print(i)
+
+
+janela = tk.Tk()
+Tela(janela)
+janela.mainloop()

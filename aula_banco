@@ -1,0 +1,87 @@
+import sqlite3
+from sqlite3 import Error
+
+
+def conexao():
+    caminho = r"C:\Users\carlos.ceac\Desktop\Python\banco.db"
+    try:
+        con = None
+        con = sqlite3.connect(caminho)
+        return con
+    except Error as error:
+        print(error)
+
+sql_insert = 'INSERT INTO cliente VALUES(4,"Teste", "0000000");'
+
+sql_tabela = """
+             CREATE TABLE cliente(
+             id INTEGER PRIMARY KEY,
+             nome VARCHAR(100) NOT NULL,
+             cpf VARCHAR(11) NOT NULL)
+             """
+
+sql_update = 'UPDATE cliente SET nome = "Elias Charizard" WHERE id = 8'
+sql_delete = 'DELETE FROM cliente WHERE id > 10;'
+sql_consutar = "SELECT * FROM cliente;"
+# print(conexao())
+
+def consultar(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        resultado = cursor.fetchall()
+        con.close()
+        return resultado
+    except Error as er:
+        print(er)
+
+def inserir(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        print("Registros inseridos")
+    except Error as er:
+        print(er)
+
+def tabela(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        print("Tabela inserida")
+    except Error as er:
+        print(er)
+
+def atualizar(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+        print("Atualiza funcionando")
+    except Error as er:
+        print(er)
+
+def deletar(sql):
+    try:
+        con = conexao()
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+        con.close()
+        print("Deletado com Sucesso!")
+    except Error as er:
+        print(er)
+
+# tabela(sql_tabela)
+# deletar(sql_delete)
+# atualizar(sql_update)
+# inserir(sql_insert)
+# consultar(sql_consutar)
+# for i in consultar(sql_consutar):
+#     print(i)
